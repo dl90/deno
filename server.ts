@@ -1,7 +1,8 @@
-import { Application, Router, RouterContext } from './dependencies.ts'
+import { Application, dotenv } from './dependencies.ts'
 import router from './router.ts'
 
 const app = new Application()
+dotenv.config({ export: true })
 
 app.use(router.routes())
 app.use(router.allowedMethods())
