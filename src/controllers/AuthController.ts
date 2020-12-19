@@ -1,8 +1,8 @@
-import { RouterContext, bcrypt, JWT, dotenv } from '../dependencies.ts'
-import User from "../models/User.ts"
+import { RouterContext, bcrypt, JWT } from '../../dependencies.ts'
+import User from '../models/User.ts'
 
 class AuthController {
-  async login(context: RouterContext) {
+  async login (context: RouterContext) {
     const value = await context.request.body().value
     const args = Object.fromEntries(value)
     if (!args.email || !args.password) {
@@ -25,23 +25,18 @@ class AuthController {
         aud: 'user',
         iat: JWT.getNumericDate(new Date()),
         exp: JWT.getNumericDate(3600),
-        user: {
-          id: user._id,
-          name: user.name
-        }
+        _id: user._id
       }
-
       const header: JWT.Header = {
-        alg: "HS512",
-        typ: "JWT"
+        alg: 'HS512',
+        typ: 'JWT'
       }
-
       const jwt = await JWT.create(header, payload, Deno.env.get('JWT_SECRET') || 'secret')
       context.response.body = { id: user._id, name: user.name, jwt }
     }
   }
 
-  async register(context: RouterContext) {
+  async register (context: RouterContext) {
     const value = await context.request.body().value
     const args = Object.fromEntries(value)
     const user = await User.findOne({ email: args.email })

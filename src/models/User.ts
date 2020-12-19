@@ -1,19 +1,26 @@
 import { usersCollection } from '../mongo.ts'
 
-export default class User {
+interface IUser {
+  _id: string,
+  email: string,
+  password: string,
+  name: string
+}
+
+export default class User implements IUser {
   public _id: any
   public email: string
   public password: string
   public name: string
 
-  constructor({ _id = '', email = '', password = '', name = '' }) {
+  constructor ({ _id = '', email = '', password = '', name = '' }) {
     this._id = _id
     this.email = email
     this.password = password
     this.name = name
   }
 
-  static isUser(user: unknown): user is User {
+  static isUser (user: unknown): user is User {
     return typeof user == 'object'
       && user !== null
       && '_id' in user
@@ -22,14 +29,14 @@ export default class User {
       && 'name' in user
   }
 
-  static async findOne(params: object) {
+  static async findOne (params: object): Promise<User | null> {
     const user = await usersCollection.findOne(params)
-    if (user && User.isUser(user)) {
-      return new User(user)
-    }
+    return this.isUser(user)
+      ? new User(user)
+      : null
   }
 
-  async register() {
+  async register () {
     this._id = await usersCollection.insertOne(this)
     return this
   }
