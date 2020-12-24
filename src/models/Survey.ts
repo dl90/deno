@@ -1,24 +1,10 @@
 import { Bson } from '../../dependencies.ts'
 import { surveysCollection } from '../mongo.ts'
 
-interface ISurvey {
-  _id?: string,
-  userID: string,
-  name: string,
-  desc: string
-}
+export default class Survey {
+  _id: any
 
-export default class Survey implements ISurvey {
-  public _id: any
-  public userID: string
-  public name: string
-  public desc: string
-
-  constructor (userID: string, name: string, desc: string) {
-    this.userID = userID
-    this.name = name
-    this.desc = desc
-  }
+  constructor (public userID: string, public name: string, public desc: string) { }
 
   private static parse (obj: any): Survey {
     const survey = new Survey(obj.userID, obj.name, obj.desc)
@@ -29,10 +15,17 @@ export default class Survey implements ISurvey {
   static isSurvey (survey: unknown): survey is Survey {
     return typeof survey === 'object'
       && survey !== null
-      && '_id' in survey
-      && 'userID' in survey
-      && 'name' in survey
-      && 'desc' in survey
+      && survey.hasOwnProperty('_id')
+      && survey.hasOwnProperty('userID')
+      && survey.hasOwnProperty('name')
+      && survey.hasOwnProperty('desc')
+  }
+
+  static async findAll (): Promise<Survey[]>  {
+    const cursor = surveysCollection.find()
+    const result = await cursor.toArray()
+    const parsed = result.filter(val => this.isSurvey(val)).map(val => this.parse(val))
+    return parsed
   }
 
   static async findByUser (userID: string): Promise<Survey[]> {

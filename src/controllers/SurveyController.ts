@@ -1,69 +1,56 @@
 import { RouterContext } from '../../dependencies.ts'
+import BaseSurvey from './BaseSurvey.ts'
 import Survey from '../models/Survey.ts'
 import User from '../models/User.ts'
 
-class SurveyController {
+class SurveyController extends BaseSurvey {
 
-  private async parseParamsIDAndFindOne (context: RouterContext, verify: boolean): Promise<Survey | null> {
-    const surveyID = context.params.id
-    if (!surveyID) {
-      context.response.status = 404
-      context.response.body = { message: 'Incorrect ID' }
-      return null
-    }
-
-    const survey = await Survey.findByID(surveyID)
-    if (!survey) {
-      context.response.status = 404
-      context.response.body = { message: 'Not Found' }
-      return null
-    }
-
-    if (verify) {
-      const user = context.state.user as User
-      if (survey && survey.userID !== user._id) {
-        context.response.status = 403
-        context.response.body = { message: 'Forbidden' }
-        return null
-      }
-    }
-
-    return survey
-  }
-
-  async getAllUsers (context: RouterContext) {
+  async getAllByUsers (context: RouterContext) {
     const user = context.state.user as User
     const result = await Survey.findByUser(user._id)
     context.response.body = result
   }
 
   async getOne (context: RouterContext) {
-    const survey = await this.parseParamsIDAndFindOne(context, false)
+    const survey = await this.findOneSurveyByParams(context, false)
     if (survey) context.response.body = survey
+    else {
+      context.response.status = 404
+      context.response.body = { message: 'Not found' }
+    }
   }
 
   async create (context: RouterContext) {
     const user = context.state.user as User
     const { name, desc } = await context.request.body().value
-    const survey = new Survey(user._id, name, desc)
+    let survey = new Survey(user._id, name, desc)
 
-    await survey.create()
-    context.response.status = 201
-    context.response.body = survey
-  }
-
-  async update (context: RouterContext) {
-    const survey = await this.parseParamsIDAndFindOne(context, true)
-    if (survey) {
-      const { name, desc } = await context.request.body().value
-      const update = await survey.update(name, desc)
-      context.response.body = update ? survey : { message: 'Update failed' }
-      return
+    survey = await survey.create()
+    if (survey._id) {
+      context.response.status = 201
+      context.response.body = survey
+    } else {
+      context.response.status = 500
+      context.response.body = { message: 'Failed to insert to database' }
     }
   }
 
+  async update (context: RouterContext) {
+    const survey = await this.findOneSurveyByParams(context, true)
+
+    if (survey) {
+      const { name, desc } = await context.request.body().value
+      const updated = await survey.update(name ?? survey.name, desc ?? survey.desc)
+      context.response.body = updated ? survey : { message: 'Update failed' }
+      return
+    }
+    context.response.status = 404
+    context.response.body = { message: 'Not found' }
+  }
+
   async delete (context: RouterContext) {
-    const survey = await this.parseParamsIDAndFindOne(context, true)
+    const survey = await this.findOneSurveyByParams(context, true)
+
     if (survey) {
       const delCount = await survey.delete()
       if (delCount === 1) context.response.status = 204
@@ -73,10 +60,8 @@ class SurveyController {
       }
       return
     }
-
     context.response.status = 404
     context.response.body = { message: 'Not found' }
-    return
   }
 }
 

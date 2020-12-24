@@ -1,4 +1,4 @@
-import { RouterContext, bcrypt, JWT } from '../../dependencies.ts'
+import { RouterContext, bcrypt, JWT, oak } from '../../dependencies.ts'
 import User from '../models/User.ts'
 
 class AuthController {
@@ -32,26 +32,27 @@ class AuthController {
         typ: 'JWT'
       }
       const jwt = await JWT.create(header, payload, Deno.env.get('JWT_SECRET') || 'secret')
-      context.response.body = { id: user._id, name: user.name, jwt }
+      const cookie = new oak.Cookies(context.request, context.response)
+      cookie.set('JWT', jwt)
+      context.response.body = { id: user._id, name: user.name }
     }
   }
 
   async register (context: RouterContext) {
     const value = await context.request.body().value
     const args = Object.fromEntries(value)
-    const user = await User.findOne({ email: args.email })
+    let user = await User.findOne(args.email)
 
     if (user) {
       context.response.status = 406
       context.response.body = { message: 'Email taken' }
       return
-    } else {
-      const hash = await bcrypt.hash(args.password)
-      const user = await new User({ ...args, password: hash }).register()
-      context.response.status = 200
-      context.response.body = { _id: user._id, name: user.name }
     }
 
+    const hash = await bcrypt.hash(args.password)
+    user = await new User({ ...args, password: hash }).register()
+    context.response.status = 200
+    context.response.body = { _id: user._id, name: user.name }
   }
 }
 

@@ -1,22 +1,38 @@
-import { Router, RouterContext } from '../dependencies.ts'
+import { oak } from '../dependencies.ts'
 import authMiddleware from './middleware/authMiddleware.ts'
+import ViewController from './controllers/ViewController.ts'
 import AuthController from './controllers/AuthController.ts'
 import SurveyController from './controllers/SurveyController.ts'
+import QuestionController from './controllers/QuestionController.ts'
 
-const router = new Router()
+const router = new oak.Router()
+const API = '/api/v1'
 
-// home
-router.get('/', (context: RouterContext) => { context.response.body = 'Hi' })
+export enum ParamIDs {
+  SURVEY = 'surveyID',
+  QUESTION = 'questionID'
+}
+
+// pages
+router.get('/', ViewController.surveys)
+router.get(`/survey/:${ParamIDs.SURVEY}`, ViewController.viewSurvey)
 
 // auth
-router.post('/api/v1/login', AuthController.login)
-router.post('/api/v1/register', AuthController.register)
+router.post(`${API}/login`, AuthController.login)
+router.post(`${API}/register`, AuthController.register)
 
 // survey
-router.get('/api/v1/survey', authMiddleware, SurveyController.getAllUsers.bind(SurveyController))
-router.get('/api/v1/survey/:id', authMiddleware, SurveyController.getOne.bind(SurveyController))
-router.post('/api/v1/survey', authMiddleware, SurveyController.create.bind(SurveyController))
-router.patch('/api/v1/survey/:id', authMiddleware, SurveyController.update.bind(SurveyController))
-router.delete('/api/v1/survey/:id', authMiddleware, SurveyController.delete.bind(SurveyController))
+router.get(`${API}/survey`, authMiddleware, SurveyController.getAllByUsers.bind(SurveyController))
+router.get(`${API}/survey/:${ParamIDs.SURVEY}`, authMiddleware, SurveyController.getOne.bind(SurveyController))
+router.post(`${API}/survey`, authMiddleware, SurveyController.create.bind(SurveyController))
+router.patch(`${API}/survey/:${ParamIDs.SURVEY}`, authMiddleware, SurveyController.update.bind(SurveyController))
+router.delete(`${API}/survey/:${ParamIDs.SURVEY}`, authMiddleware, SurveyController.delete.bind(SurveyController))
+
+// questions
+router.get(`${API}/survey/:${ParamIDs.SURVEY}/questions`, authMiddleware, QuestionController.getAllBySurvey.bind(QuestionController))
+router.get(`${API}/question/:${ParamIDs.QUESTION}`, authMiddleware, QuestionController.getOne.bind(QuestionController))
+router.post(`${API}/question/:${ParamIDs.SURVEY}`, authMiddleware, QuestionController.create.bind(QuestionController))
+router.patch(`${API}/question/:${ParamIDs.QUESTION}`, authMiddleware, QuestionController.update.bind(QuestionController))
+router.delete(`${API}/question/:${ParamIDs.QUESTION}`, authMiddleware, QuestionController.delete.bind(QuestionController))
 
 export default router

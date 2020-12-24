@@ -6,3 +6,4 @@ const db = client.database('deno')
 
 export const usersCollection = db.collection('users')
 export const surveysCollection = db.collection('surveys')
+export const questionsCollection = db.collection('questions')
