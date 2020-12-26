@@ -1,18 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
+<%- await include("src/views/partials/head.ejs")%>
 
 <body>
-    <% for (let question of questions) { %>
+  <div>
+    <h3><%= survey.name %></h3>
+    <p><%= survey.desc %></p>
+  </div>
+
+  <form action="/survey/<%= survey._id %>" method="POST">
+    <% for (const question of questions) { %>
       <div>
-        <h4><%= question.question %></h4>
+        <h5><%= question.question %>
+          <% if (question.required) { %>
+            <span>(required)</span>
+          <% } %>
+        </h5>
+
+        <% if (question.isText()) { %>
+          <input type="text" name="<%= question._id %>" placeholder="answer" value="<%= answers[question._id]%>">
+          <% if (errors[question._id]) { %>
+            <span><%= errors[question._id] %><span>
+          <% } %>
+
+        <% } else if (question.isMulti()) { %>
+          <% if (question.data.multiple) { %>
+            <% for (const [i, choice] of question.data.choices.entries()) { %>
+              <% if (answers[question._id]?.includes(choice)) { %>
+                <input type="checkbox" id="<%= question._id %>_<%= i %>" name="<%= question._id %>" value="<%= choice %>" checked>
+              <% } else { %>
+                <input type="checkbox" id="<%= question._id %>_<%= i %>" name="<%= question._id %>" value="<%= choice %>">
+              <% } %>
+              <label for="<%= question._id %>_<%= i %>" ><%= choice%></label>
+            <% } %>
+            <% if (errors[question._id]) { %>
+              <span><%= errors[question._id] %><span>
+            <% } %>
+
+          <% } else { %>
+            <% for (const [i, choice] of question.data.choices.entries()) { %>
+              <% if (answers[question._id] === choice) { %>
+                <input type="radio" id="<%= question._id %>_<%= i %>" name="<%= question._id %>" value="<%= choice %>" checked>
+              <% } else { %>
+                <input type="radio" id="<%= question._id %>_<%= i %>" name="<%= question._id %>" value="<%= choice %>">
+              <% } %>
+              <label for="<%= question._id %>_<%= i %>" ><%= choice%></label>
+            <% } %>
+            <% if (errors[question._id]) { %>
+              <span><%= errors[question._id] %><span>
+            <% } %>
+          <% } %>
+
+        <% } else if (question.isBoolean()) { %>
+          <% if (answers[question._id] === 'true') { %>
+            <input type="radio" id="<%= question._id %>_true" name="<%= question._id %>" value=true checked>
+            <label for="<%= question._id %>_true" >True</label>
+            <input type="radio" id="<%= question._id %>_false" name="<%= question._id %>" value=false>
+            <label for="<%= question._id %>_false" >False</label>
+          <% } else if (answers[question._id] === 'false'){ %>
+            <input type="radio" id="<%= question._id %>_true" name="<%= question._id %>" value=true>
+            <label for="<%= question._id %>_true" >True</label>
+            <input type="radio" id="<%= question._id %>_false" name="<%= question._id %>" value=false checked>
+            <label for="<%= question._id %>_false" >False</label>
+          <% } else { %>
+            <input type="radio" id="<%= question._id %>_true" name="<%= question._id %>" value=true>
+            <label for="<%= question._id %>_true" >True</label>
+            <input type="radio" id="<%= question._id %>_false" name="<%= question._id %>" value=false>
+            <label for="<%= question._id %>_false" >False</label>
+          <% } %>
+          <% if (errors[question._id]) { %>
+            <span><%= errors[question._id] %><span>
+          <% } %>
+        <% } %>
       </div>
-      <% } %>
+    <% } %>
+    <input type="submit" value="Submit">
+</form>
 </body>
 
 </html>

@@ -13,9 +13,10 @@ export enum ParamIDs {
   QUESTION = 'questionID'
 }
 
-// pages
+// view
 router.get('/', ViewController.surveys)
 router.get(`/survey/:${ParamIDs.SURVEY}`, ViewController.viewSurvey)
+router.post(`/survey/:${ParamIDs.SURVEY}`, ViewController.submitSurvey)
 
 // auth
 router.post(`${API}/login`, AuthController.login)

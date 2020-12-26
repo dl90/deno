@@ -1,20 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="surveys.css">
-  <title>Document</title>
-</head>
+<%- await include("src/views/partials/head.ejs")%>
 
 <body>
-    <% for (let survey of surveys) { %>
-      <div>
-        <a href="/survey/<%= survey._id %>"><%= survey.name %></a>
-        <span><%= survey.desc %></span>
-      </div>
-      <% } %>
+  <% for (let survey of surveys) { %>
+    <div>
+      <a href="/survey/<%= survey._id %>"><%= survey.name %></a>
+      <p><%= survey.desc %></p>
+    </div>
+  <% } %>
 </body>
 
 </html>

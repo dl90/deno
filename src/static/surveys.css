@@ -1,3 +1,17 @@
+body {
+  background-color: black;
+  color: white;
+}
+
 a {
+  color: red;
+}
+
+div {
+  padding: 20px;
+}
+
+span {
+  margin-left: 10px;
   color: red;
 }

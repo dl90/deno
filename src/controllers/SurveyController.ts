@@ -37,7 +37,6 @@ class SurveyController extends BaseSurvey {
 
   async update (context: RouterContext) {
     const survey = await this.findOneSurveyByParams(context, true)
-
     if (survey) {
       const { name, desc } = await context.request.body().value
       const updated = await survey.update(name ?? survey.name, desc ?? survey.desc)
@@ -50,7 +49,6 @@ class SurveyController extends BaseSurvey {
 
   async delete (context: RouterContext) {
     const survey = await this.findOneSurveyByParams(context, true)
-
     if (survey) {
       const delCount = await survey.delete()
       if (delCount === 1) context.response.status = 204

@@ -12,6 +12,14 @@ export default class Survey {
     return survey
   }
 
+  private static parseID (_id: string | Bson.ObjectID) {
+    try {
+      return new Bson.ObjectID(_id)
+    } catch (e) {
+      return null
+    }
+  }
+
   static isSurvey (survey: unknown): survey is Survey {
     return typeof survey === 'object'
       && survey !== null
@@ -21,22 +29,22 @@ export default class Survey {
       && survey.hasOwnProperty('desc')
   }
 
-  static async findAll (): Promise<Survey[]>  {
+  static async findAll (): Promise<Survey[]> {
     const cursor = surveysCollection.find()
     const result = await cursor.toArray()
-    const parsed = result.filter(val => this.isSurvey(val)).map(val => this.parse(val))
+    const parsed = result.filter(val => this.isSurvey(val)).map(val => Survey.parse(val))
     return parsed
   }
 
   static async findByUser (userID: string): Promise<Survey[]> {
-    const cursor = surveysCollection.find({ userID })
+    const cursor = surveysCollection.find({ userID: Survey.parseID(userID) })
     const result = await cursor.toArray()
-    const parsed = result.filter(val => this.isSurvey(val)).map(val => this.parse(val))
+    const parsed = result.filter(val => this.isSurvey(val)).map(val => Survey.parse(val))
     return parsed
   }
 
   static async findByID (surveyID: string): Promise<Survey | null> {
-    const survey = await surveysCollection.findOne({ _id: new Bson.ObjectID(surveyID) })
+    const survey = await surveysCollection.findOne({ _id: Survey.parseID(surveyID) })
     return this.isSurvey(survey)
       ? this.parse(survey)
       : null
@@ -49,7 +57,7 @@ export default class Survey {
 
   async update (name: string, desc: string): Promise<Survey | false> {
     const { matchedCount, modifiedCount } = await surveysCollection.updateOne(
-      { _id: new Bson.ObjectID(this._id) },
+      { _id: Survey.parseID(this._id) },
       { $set: { name, desc } }
     )
 
@@ -64,6 +72,6 @@ export default class Survey {
   }
 
   delete (): Promise<number> {
-    return surveysCollection.deleteOne({ _id: new Bson.ObjectID(this._id) })
+    return surveysCollection.deleteOne({ _id: Survey.parseID(this._id) })
   }
 }

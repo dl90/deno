@@ -2,9 +2,9 @@ import { Bson } from '../../dependencies.ts'
 import { questionsCollection } from '../mongo.ts'
 
 export enum QuestionTypes {
-  MULTIPLE = 'multi-choice',
+  MULTIPLE = 'multi',
   BOOLEAN = 'boolean',
-  BLANK = 'fill-blank'
+  TEXT = 'text'
 }
 
 export default class Question {
@@ -23,6 +23,14 @@ export default class Question {
     return question
   }
 
+  private static parseID (_id: string | Bson.ObjectID) {
+    try {
+      return new Bson.ObjectID(_id)
+    } catch (e) {
+      return null
+    }
+  }
+
   static isQuestion (question: unknown): question is Question {
     return typeof question === 'object'
       && question !== null
@@ -35,15 +43,15 @@ export default class Question {
   }
 
   static async findBySurvey (surveyID: string): Promise<Question[]> {
-    const cursor = await questionsCollection.find({ surveyID })
+    const cursor = await questionsCollection.find({ surveyID: Question.parseID(surveyID) })
     const results = await cursor.toArray()
-    return results.filter(this.isQuestion).map(v => this.parse(v))
+    return results.filter(this.isQuestion).map(v => Question.parse(v))
   }
 
   static async findByID (questionID: string): Promise<Question | null> {
-    const question = await questionsCollection.findOne({ _id: new Bson.ObjectID(questionID) })
+    const question = await questionsCollection.findOne({ _id: Question.parseID(questionID) })
     return this.isQuestion(question)
-      ? this.parse(question)
+      ? Question.parse(question)
       : null
   }
 
@@ -54,7 +62,7 @@ export default class Question {
 
   async update (question: string, type: QuestionTypes, required: boolean, data: any): Promise<Question | false> {
     const { matchedCount, modifiedCount } = await questionsCollection.updateOne(
-      { _id: new Bson.ObjectID(this._id) },
+      { _id: Question.parseID(this._id) },
       { $set: { question, type, required, data } }
     )
 
@@ -71,6 +79,18 @@ export default class Question {
   }
 
   delete (): Promise<number> {
-    return questionsCollection.deleteOne({ _id: new Bson.ObjectID(this._id) })
+    return questionsCollection.deleteOne({ _id: Question.parseID(this._id) })
+  }
+
+  isText() {
+    return this.type === QuestionTypes.TEXT
+  }
+
+  isMulti() {
+    return this.type === QuestionTypes.MULTIPLE
+  }
+
+  isBoolean() {
+    return this.type === QuestionTypes.BOOLEAN
   }
 }
